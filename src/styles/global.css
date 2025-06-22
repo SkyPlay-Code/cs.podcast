@@ -59,6 +59,10 @@
   --dial-glow-blur: 8px; /* Blur radius for the glow */
   --glow-opacity: 0.6; 
   --glow-scale: 1;
+
+  /* Horizontal Bookshelf Specific */
+  --shelf-mask-gradient: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  --shelf-light-wash: linear-gradient(to right, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
 }
 
 body[data-theme='dark'] {
@@ -208,4 +212,13 @@ body {
 .concave-dial-button.w-14 .dial-text-content,
 .concave-dial-button.sm\:w-16 .dial-text-content {
   font-size: 0.8rem;
+}
+
+/* Utility to hide scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
