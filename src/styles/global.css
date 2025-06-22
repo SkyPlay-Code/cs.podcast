@@ -12,6 +12,11 @@
   --texture-dark-walnut: url('/textures/dark-walnut.jpg');
   --texture-creamy-vellum: url('/textures/creamy-vellum.jpg');
 
+  /* Font Families (for reference, applied via Tailwind primarily) */
+  --font-family-sans: Inter, Poppins, sans-serif;
+  --font-family-serif-display: Lora, serif;
+
+
   /* Base Palette for Dark Theme */
   --color-accent-dark: #D4AF37;
   --rgb-accent-dark-val: 212, 175, 55;
@@ -52,7 +57,6 @@
   /* ConcaveDial Specific */
   --dial-icon-mask-size: 50%; /* Size of the icon mask relative to the dial */
   --dial-glow-blur: 8px; /* Blur radius for the glow */
-   /* Default glow opacity and scale, controlled by JS via style prop */
   --glow-opacity: 0.6; 
   --glow-scale: 1;
 }
@@ -106,7 +110,7 @@ body {
   background-position: center center;
   background-color: var(--current-color-background-fallback);
   color: var(--current-color-text-primary);
-  font-family: 'Inter', 'Poppins', sans-serif;
+  font-family: var(--font-family-sans); /* Use Inter as default */
   font-smoothing: antialiased;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -125,7 +129,6 @@ body {
   transition-timing-function: var(--theme-timing-function);
 }
 
-/* Keyframes for TomeSpine pulsing shadow */
 @keyframes pulseShadow {
   0%, 100% {
     box-shadow: var(--tomespine-glow-shadow-static);
@@ -139,7 +142,6 @@ body {
   animation: pulseShadow 2s infinite ease-in-out;
 }
 
-/* Keyframes for Molten Gold Shimmer */
 @keyframes moltenGoldShimmer {
   0% { background-position: 200% center; }
   100% { background-position: -100% center; }
@@ -149,17 +151,16 @@ body {
   animation: moltenGoldShimmer 3s linear infinite;
 }
 
-/* ConcaveDial Styles */
 .concave-dial-button {
   position: relative;
   border-radius: 50%;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent; 
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none; /* Replaced by focus-visible if needed */
-  transition: transform 0.1s ease-out; /* For the y-offset on tap */
+  outline: none; 
+  transition: transform 0.1s ease-out; 
 }
 
 .concave-dial-button:focus-visible {
@@ -170,55 +171,41 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  /* Concave gradient: lighter at 40% 35% (top-left-ish), darker towards edges */
   background-image: radial-gradient(circle at 40% 35%, var(--dial-concave-highlight), var(--dial-concave-base) 85%);
-  
-  /* Mask properties for icon "hole" */
   mask-size: var(--dial-icon-mask-size);
   mask-repeat: no-repeat;
   mask-position: center;
   -webkit-mask-size: var(--dial-icon-mask-size);
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
-
-  display: flex; /* For text content alignment */
+  display: flex; 
   align-items: center;
   justify-content: center;
 }
 
-/* Glowing layer underneath, revealed by the mask */
 .dial-surface-masked::before {
   content: "";
   position: absolute;
-  /* Make ::before slightly larger than parent to allow blur to spread nicely */
   top: -5px; bottom: -5px; left: -5px; right: -5px;
   border-radius: 50%;
-  /* Glow gradient: accent color in center, fading to transparent */
   background-image: radial-gradient(circle, var(--current-color-accent-primary) 20%, transparent 70%);
   filter: blur(var(--dial-glow-blur));
-  z-index: -1; /* Position behind the dial-surface-masked's own background */
-  
-  /* Controlled by Framer Motion via CSS variables on parent .concave-dial-button */
+  z-index: -1; 
   opacity: var(--glow-opacity);
   transform: scale(var(--glow-scale));
   transition: opacity 0.25s ease-out, transform 0.25s ease-out;
 }
 
 .dial-text-content {
-  font-family: 'ui-monospace', 'Menlo', 'Consolas', monospace; /* Monospaced font for playback rate */
-  font-size: 0.7rem; /* Adjust as needed for small dials */
+  font-family: var(--font-family-sans); /* Changed to Inter */
+  font-size: 0.7rem; 
   line-height: 1;
   font-weight: 500;
-  color: var(--dial-text-color); /* Color for the text itself */
-  text-shadow: 0 1px 1px rgba(0,0,0,0.3); /* Subtle shadow for etched look */
+  color: var(--dial-text-color); 
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); 
 }
 
-/* Adjust text size for larger main play/pause button if it were text */
 .concave-dial-button.w-14 .dial-text-content,
 .concave-dial-button.sm\:w-16 .dial-text-content {
   font-size: 0.8rem;
 }
-
-/* Ensure skip icons are not too bold when only fill is used for mask */
-/* This is handled by SVG path data now - using fill="white" and stroke="white" for skip icons */
-

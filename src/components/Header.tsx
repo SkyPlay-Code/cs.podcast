@@ -1,15 +1,18 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const Header: React.FC = () => {
   return (
-    <header 
-      className="w-full sticky top-0 z-30 theme-transition console-theme-transition" // Added console-theme-transition for background
+    <motion.header 
+      className="w-full sticky top-0 z-30 theme-transition console-theme-transition"
       style={{ 
-        background: 'var(--current-color-console-bg)', // Use console background or surface as appropriate
+        background: 'var(--current-color-console-bg)', 
         boxShadow: 'var(--current-shadow-properties)',
-        // borderBottom: '1px solid var(--current-color-border)' // Optional
       }}
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }} // Header animation
     >
       <div className="max-w-5xl mx-auto py-4 px-4 md:px-8">
         <h1 
@@ -25,7 +28,7 @@ const Header: React.FC = () => {
           An Immersive Audio-First Learning Experience
         </p>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

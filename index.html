@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Ethereal Library</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/styles/global.css">
     <script>
         tailwind.config = {
@@ -15,10 +17,10 @@
                         'brand': {
                             'DEFAULT': 'var(--color-accent)', // Maps Tailwind's 'brand' to our CSS var
                         },
-                        // You can add other mappings if needed, but primary theming is via CSS vars
                     },
                     fontFamily: {
                         sans: ['Inter', 'Poppins', 'sans-serif'],
+                        'serif-display': ['Lora', 'serif'], // Added Lora for TomeSpine titles
                     }
                 }
             }

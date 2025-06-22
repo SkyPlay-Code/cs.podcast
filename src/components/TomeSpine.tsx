@@ -13,16 +13,14 @@ interface TomeSpineProps {
 }
 
 const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onSelect }) => {
-  const { theme } = useTheme(); // To apply conditional styles if needed, or rely on CSS vars
+  const { theme } = useTheme(); 
   const tomeBaseWidth = 80;
   const tomeBaseHeight = 320;
 
   const combinedVariants: Variants = {
-    // Entry animations (from former tomeItemVariants)
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } },
     
-    // Interaction animations (from former tomeInteractionVariants)
     initial: (isActiveFlag: boolean) => ({
       x: isActiveFlag ? 20 : 0,
       boxShadow: isActiveFlag ? 'var(--tomespine-glow-shadow-static)' : 'none',
@@ -35,7 +33,7 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
       zIndex: 10,
       transition: { ease: "easeOut", duration: 0.3 }
     },
-    active: { // This state is when it's selected
+    active: { 
       x: 20,
       boxShadow: 'var(--tomespine-glow-shadow-static)',
       zIndex: 5,
@@ -60,9 +58,9 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
     flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '16px 8px', // More vertical padding
+    padding: '16px 8px', 
     boxSizing: 'border-box',
-    borderRadius: '6px 3px 3px 6px', // Slightly more pronounced book edge
+    borderRadius: '6px 3px 3px 6px', 
   };
   
   const darkThemeSpineOverlayStyle: React.CSSProperties = theme === 'dark' ? {
@@ -75,12 +73,10 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
   return (
     <motion.div
       role="listitem"
-      variants={combinedVariants} // Use the merged variants
+      variants={combinedVariants} 
       custom={isActive} 
       animate={currentAnimateState} 
       whileHover={isActive ? undefined : "hover"} 
-      // `initial="hidden"` and `animate="show"` (for entry) will be picked up by Framer Motion
-      // from `combinedVariants` when this component is part of Bookshelf's staggerChildren.
       className={`theme-transition ${isActive && isPlaying ? 'tomespine-pulsing' : ''}`}
       style={effectiveSpineStyles}
       onClick={onSelect}
@@ -95,10 +91,10 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
       aria-pressed={isActive}
     >
       <h3
-        className="font-semibold text-center origin-center"
+        className="font-serif-display font-medium text-center origin-center" // Applied Lora font
         style={{
           transform: 'rotate(180deg)', 
-          fontSize: '14px',
+          fontSize: '14px', // Slightly adjusted for Lora if needed
           lineHeight: '1.3',
           maxHeight: `${tomeBaseHeight - (tomeBaseWidth - 16) - 32 - 10}px`, 
           color: 'var(--current-color-accent-primary)',

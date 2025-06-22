@@ -7,7 +7,7 @@ import { useTheme } from './contexts/ThemeContext';
 
 import Header from './components/Header';
 import Bookshelf from './components/Bookshelf';
-import Console from './components/Console'; // Updated from CommandDeck
+import Console from './components/Console';
 import ThemeTransitionOverlay from './components/ThemeTransitionOverlay';
 
 const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
@@ -16,7 +16,7 @@ const App: React.FC = () => {
   const { theme, initiateThemeChange, isLogicTransitioning } = useTheme();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [episodesData] = useState<Episode[]>(allEpisodes);
-  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null);
+  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null); // Set to 0 to test console animation on load
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
@@ -24,18 +24,17 @@ const App: React.FC = () => {
   
   const currentEpisode = currentEpisodeIndex !== null ? episodesData[currentEpisodeIndex] : null;
 
-  // handleSelectEpisode needs to be stable for deps in handleNext/handlePrevious
   const handleSelectEpisode = useCallback((index: number) => {
     setCurrentEpisodeIndex(index);
     if (audioRef.current) {
       audioRef.current.src = episodesData[index].audioSrc;
       audioRef.current.load();
       audioRef.current.playbackRate = playbackRate;
+      // Autoplay is handled by the play() call after src/load
       audioRef.current.play().catch(error => console.error("Error playing audio:", error));
     }
   }, [episodesData, playbackRate]);
 
-  // stableHandleNext is defined before the useEffect that might use it.
   const stableHandleNext = useCallback(() => {
     if (currentEpisodeIndex === null && episodesData.length > 0) {
       handleSelectEpisode(0);
@@ -52,7 +51,7 @@ const App: React.FC = () => {
 
     const updateCurrentTime = () => setCurrentTime(audio.currentTime);
     const setAudioDuration = () => setDuration(isFinite(audio.duration) ? audio.duration : 0);
-    const handleEpisodeEnd = () => stableHandleNext(); // Use stableHandleNext
+    const handleEpisodeEnd = () => stableHandleNext();
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     
@@ -74,7 +73,7 @@ const App: React.FC = () => {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [currentEpisodeIndex, playbackRate, stableHandleNext]); // Use stableHandleNext in deps
+  }, [currentEpisodeIndex, playbackRate, stableHandleNext]);
 
   const handlePlayPause = useCallback(() => {
     if (!audioRef.current || currentEpisodeIndex === null) {
@@ -95,14 +94,14 @@ const App: React.FC = () => {
   useEffect(() => {
      const audio = audioRef.current;
      if (audio) {
-        audio.onended = stableHandleNext; // Use stableHandleNext
+        audio.onended = stableHandleNext;
      }
      return () => {
         if (audio) {
             audio.onended = null;
         }
      }
-  }, [stableHandleNext]); // Use stableHandleNext in deps
+  }, [stableHandleNext]);
 
 
   const handlePrevious = useCallback(() => {
@@ -139,13 +138,18 @@ const App: React.FC = () => {
   }, [playbackRate]);
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-hidden pb-32 md:pb-28"> {/* Added padding-bottom for Console */}
+    <motion.div 
+      className="min-h-screen flex flex-col relative overflow-x-hidden pb-32 md:pb-28"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: "linear" }} // Stage 1: Background fade-in
+    >
       <audio ref={audioRef} />
       <ThemeTransitionOverlay />
 
-      <Header />
+      <Header /> {/* Header will have its own animation */}
       
-      <button 
+      <motion.button 
         onClick={initiateThemeChange} 
         disabled={isLogicTransitioning}
         className="fixed top-4 right-4 z-50 p-3 rounded-md theme-transition shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)]"
@@ -155,15 +159,18 @@ const App: React.FC = () => {
             border: '1px solid var(--current-color-border)',
         }}
         aria-label="Toggle theme"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }} // Theme button animation
       >
         {theme === 'light' ? 'Dim Study Lights' : 'Illuminate Study'}
-      </button>
+      </motion.button>
 
       <motion.main 
         className="flex-grow w-full max-w-5xl mx-auto px-4 md:px-8 py-8 relative z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        initial={{ opacity: 0, x: '100vw' }} // Stage 2: Bookshelf container slide-in
+        animate={{ opacity: 1, x: '0%' }}
+        transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
       >
         {episodesData.length > 0 ? (
             <Bookshelf
@@ -179,15 +186,15 @@ const App: React.FC = () => {
 
       <AnimatePresence>
         {currentEpisode && (
-          <Console
-            key="console-deck" // Ensure key is unique if it was command-deck before
+          <Console // Stage 3: Console animates in via its own variants (with delay)
+            key="console-deck" 
             episode={currentEpisode}
             isPlaying={isPlaying}
             currentTime={currentTime}
             duration={duration}
             playbackRate={playbackRate}
             onPlayPause={handlePlayPause}
-            onNext={stableHandleNext} // Use stable version
+            onNext={stableHandleNext}
             onPrevious={handlePrevious}
             onSeek={handleSeek}
             onSkip={handleSkip}
@@ -195,7 +202,7 @@ const App: React.FC = () => {
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

@@ -21,6 +21,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'Poppins', 'sans-serif'],
+        'serif-display': ['Lora', 'serif'], // Added for TomeSpine titles
       }
     }
   },

@@ -3,10 +3,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Episode } from '../types';
 import PlayerControls from './PlayerControls';
-import ProgressBarInlay from './ProgressBarInlay'; // Updated from ThreadOfKnowledge
+import ProgressBarInlay from './ProgressBarInlay'; 
 import { formatTime } from '../utils/time';
 
-interface ConsoleProps { // Renamed from CommandDeckProps
+interface ConsoleProps { 
   episode: Episode;
   isPlaying: boolean;
   duration: number;
@@ -20,7 +20,7 @@ interface ConsoleProps { // Renamed from CommandDeckProps
   onPlaybackRateChange: () => void;
 }
 
-const Console: React.FC<ConsoleProps> = ({ // Renamed from CommandDeck
+const Console: React.FC<ConsoleProps> = ({ 
   episode, isPlaying, duration, currentTime, playbackRate,
   onPlayPause, onNext, onPrevious, onSeek, onSkip, onPlaybackRateChange
 }) => {
@@ -29,7 +29,8 @@ const Console: React.FC<ConsoleProps> = ({ // Renamed from CommandDeck
     visible: { 
       y: '0%', 
       opacity: 1,
-      transition: { type: 'spring' as const, stiffness: 120, damping: 25, mass: 0.8 } 
+      // Stage 3: Console animates up from bottom, delayed
+      transition: { delay: 0.8, type: 'spring' as const, stiffness: 120, damping: 25, mass: 0.8 } 
     },
     exit: { y: '100%', opacity: 0, transition: { duration: 0.4, ease: "easeIn" as const } }
   };
@@ -37,24 +38,16 @@ const Console: React.FC<ConsoleProps> = ({ // Renamed from CommandDeck
   const consoleStyles: React.CSSProperties = {
     color: 'var(--current-color-text-primary)',
     background: 'var(--current-color-console-bg)',
-    // Inset top shadow for hard edge, combined with overall elevation shadow
     boxShadow: 'var(--current-shadow-console-edge), var(--current-shadow-properties)', 
     borderTop: '1px solid var(--current-color-border)', 
   };
   
-  // Apply backdrop-filter if the theme defines it and it's not 'none'
-  // Note: This requires the background to be semi-transparent to see the blur effect.
-  // --current-color-console-bg is a gradient; if it's opaque, backdrop-filter won't be visible.
-  // We'll assume the gradient might have some transparency or this is for future flexibility.
-  if (typeof window !== 'undefined') { // Ensure this runs client-side
+  if (typeof window !== 'undefined') { 
     const currentBackdropBlur = getComputedStyle(document.body).getPropertyValue('--current-backdrop-blur').trim();
     if (currentBackdropBlur !== 'none') {
       consoleStyles.backdropFilter = 'var(--current-backdrop-blur)';
-      // Example: if console-bg could be semi-transparent:
-      // consoleStyles.backgroundColor = 'rgba(var(--some-rgb-color), 0.8)'; // If console-bg was a solid color
     }
   }
-
 
   return (
     <motion.div
@@ -90,7 +83,7 @@ const Console: React.FC<ConsoleProps> = ({ // Renamed from CommandDeck
             onSkip={onSkip}
             onPlaybackRateChange={onPlaybackRateChange}
           />
-          <ProgressBarInlay // Updated from ThreadOfKnowledge
+          <ProgressBarInlay 
             currentTime={currentTime}
             duration={duration}
             onSeek={onSeek}
