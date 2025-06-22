@@ -15,7 +15,7 @@
   /* Base Palette for Dark Theme */
   --color-accent-dark: #D4AF37;
   --rgb-accent-dark-val: 212, 175, 55;
-  --color-accent-dark-secondary: #E0C670;
+  --color-accent-dark-secondary: #E0C670; /* Lighter gold for concave highlight */
   --color-text-dark: #EAE6E1;
   --color-text-secondary-dark: #b0a9a1;
   --material-surface-dark: var(--texture-dark-walnut);
@@ -29,7 +29,7 @@
   /* Base Palette for Light Theme */
   --color-accent-light: #8B6F1E; 
   --rgb-accent-light-val: 139, 111, 30;
-  --color-accent-light-secondary: #A4884B;
+  --color-accent-light-secondary: #A4884B; /* Lighter "old gold" for concave highlight */
   --color-text-light: #413A30;
   --color-text-secondary-light: #7a6b5c;
   --material-surface-light: var(--texture-creamy-vellum);
@@ -39,16 +39,22 @@
   --shadow-properties-light: 0 6px 20px rgba(93, 64, 55, 0.12);
   --shadow-console-edge-light: inset 0 2px 3px -1px rgba(0,0,0,0.25); /* Harder edge for console */
 
-
   /* Lamp Transition */
   --color-light-wash-start: rgba(244, 241, 233, 1);
   --color-light-wash-end: rgba(244, 241, 233, 0);
   --dark-overlay-color: rgba(28, 26, 24, 0.95);
 
-  /* TomeSpine Specific Shadows (Defaults to dark theme values, overridden by body[data-theme]) */
-  --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val); /* Default, overridden below */
+  /* TomeSpine Specific Shadows */
+  --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val);
   --tomespine-glow-shadow-static: 0 0 25px 5px rgba(var(--tomespine-glow-shadow-color-rgb-val), 0.3);
   --tomespine-glow-shadow-pulsing: 0 0 35px 10px rgba(var(--tomespine-glow-shadow-color-rgb-val), 0.45);
+
+  /* ConcaveDial Specific */
+  --dial-icon-mask-size: 50%; /* Size of the icon mask relative to the dial */
+  --dial-glow-blur: 8px; /* Blur radius for the glow */
+   /* Default glow opacity and scale, controlled by JS via style prop */
+  --glow-opacity: 0.6; 
+  --glow-scale: 1;
 }
 
 body[data-theme='dark'] {
@@ -67,6 +73,9 @@ body[data-theme='dark'] {
   --current-rgb-accent-primary-val: var(--rgb-accent-dark-val);
 
   --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val);
+  --dial-concave-highlight: var(--color-accent-dark-secondary);
+  --dial-concave-base: var(--color-accent-dark);
+  --dial-text-color: var(--color-text-dark);
 }
 
 body[data-theme='light'] {
@@ -81,10 +90,13 @@ body[data-theme='light'] {
   --current-color-accent-secondary: var(--color-accent-light-secondary);
   --current-shadow-properties: var(--shadow-properties-light);
   --current-shadow-console-edge: var(--shadow-console-edge-light);
-  --current-backdrop-blur: none; /* No blur for light theme console by default */
+  --current-backdrop-blur: none;
   --current-rgb-accent-primary-val: var(--rgb-accent-light-val);
 
   --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-light-val);
+  --dial-concave-highlight: var(--color-accent-light-secondary);
+  --dial-concave-base: var(--color-accent-light);
+  --dial-text-color: var(--color-text-light);
 }
 
 body {
@@ -129,11 +141,84 @@ body {
 
 /* Keyframes for Molten Gold Shimmer */
 @keyframes moltenGoldShimmer {
-  0% { background-position: 200% center; } /* Start from one side */
-  100% { background-position: -100% center; } /* Move to the other */
+  0% { background-position: 200% center; }
+  100% { background-position: -100% center; }
 }
 
 .molten-gold-fill {
-  /* background-size: 200% 100%; Ensure this is set on the element if not here */
   animation: moltenGoldShimmer 3s linear infinite;
 }
+
+/* ConcaveDial Styles */
+.concave-dial-button {
+  position: relative;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none; /* Replaced by focus-visible if needed */
+  transition: transform 0.1s ease-out; /* For the y-offset on tap */
+}
+
+.concave-dial-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--current-color-surface), 0 0 0 4px var(--current-color-accent-primary);
+}
+
+.dial-surface-masked {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* Concave gradient: lighter at 40% 35% (top-left-ish), darker towards edges */
+  background-image: radial-gradient(circle at 40% 35%, var(--dial-concave-highlight), var(--dial-concave-base) 85%);
+  
+  /* Mask properties for icon "hole" */
+  mask-size: var(--dial-icon-mask-size);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: var(--dial-icon-mask-size);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+
+  display: flex; /* For text content alignment */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Glowing layer underneath, revealed by the mask */
+.dial-surface-masked::before {
+  content: "";
+  position: absolute;
+  /* Make ::before slightly larger than parent to allow blur to spread nicely */
+  top: -5px; bottom: -5px; left: -5px; right: -5px;
+  border-radius: 50%;
+  /* Glow gradient: accent color in center, fading to transparent */
+  background-image: radial-gradient(circle, var(--current-color-accent-primary) 20%, transparent 70%);
+  filter: blur(var(--dial-glow-blur));
+  z-index: -1; /* Position behind the dial-surface-masked's own background */
+  
+  /* Controlled by Framer Motion via CSS variables on parent .concave-dial-button */
+  opacity: var(--glow-opacity);
+  transform: scale(var(--glow-scale));
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+.dial-text-content {
+  font-family: 'ui-monospace', 'Menlo', 'Consolas', monospace; /* Monospaced font for playback rate */
+  font-size: 0.7rem; /* Adjust as needed for small dials */
+  line-height: 1;
+  font-weight: 500;
+  color: var(--dial-text-color); /* Color for the text itself */
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3); /* Subtle shadow for etched look */
+}
+
+/* Adjust text size for larger main play/pause button if it were text */
+.concave-dial-button.w-14 .dial-text-content,
+.concave-dial-button.sm\:w-16 .dial-text-content {
+  font-size: 0.8rem;
+}
+
+/* Ensure skip icons are not too bold when only fill is used for mask */
+/* This is handled by SVG path data now - using fill="white" and stroke="white" for skip icons */
+
