@@ -1,10 +1,15 @@
 
-import React, { useEffect } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import React from 'react';
+import { motion, AnimatePresence, Variants, AnimationDefinition } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ThemeTransitionOverlay: React.FC = () => {
-  const { isTransitioning, transitionDirection, completeActualThemeSwap, finalizeTransition } = useTheme();
+  const { 
+    isOverlayVisible, 
+    transitionDirection, 
+    completeActualThemeSwap, 
+    cleanupAfterOverlayExit 
+  } = useTheme();
 
   const commonOverlayStyle: React.CSSProperties = {
     position: 'fixed',
@@ -21,12 +26,12 @@ const ThemeTransitionOverlay: React.FC = () => {
       clipPath: 'circle(0% at 0% 0%)',
     },
     animate: {
-      clipPath: 'circle(150% at 0% 0%)', // Ensure it covers the whole screen
+      clipPath: 'circle(150% at 0% 0%)', 
       transition: { duration: 1.2, ease: [0.25, 1, 0.5, 1] as const },
     },
-    exit: { // Fade out quickly after revealing the light theme
+    exit: { 
       opacity: 0,
-      transition: { duration: 0.3, delay: 0 }, // No delay, start fade out as soon as exit starts
+      transition: { duration: 0.3, delay: 0 },
     }
   };
 
@@ -42,21 +47,30 @@ const ThemeTransitionOverlay: React.FC = () => {
     },
   };
   
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    if (isTransitioning) {
-        const swapDelay = transitionDirection === 'toLight' ? 600 : 500; // ms
-        
-        timer = setTimeout(() => {
+  // This handler will be called when the entry animation of an overlay completes.
+  const handleEntryAnimationComplete = (definition: AnimationDefinition) => {
+    // We only care about the completion of the 'animate' (entry) variant
+    if (typeof definition === 'string' && definition === 'animate') {
+        completeActualThemeSwap();
+    } else if (typeof definition === 'object' && definition !== null && Object.keys(definition).length > 0) {
+        // If definition is an object, it's a target. Assume it's the entry.
+        // This check might need refinement based on exact Framer Motion behavior with complex variants.
+        // For simple 'initial'/'animate'/'exit', checking string 'animate' is safer.
+        // However, if animate is an object target, this might be the only way.
+        // Let's assume for now that if it's not 'initial' or 'exit', it's related to entry.
+        // A safer check: check if the definition matches the 'animate' variant from your variants object.
+        if (transitionDirection === 'toLight' && definition === lightWashVariants.animate) {
             completeActualThemeSwap();
-        }, swapDelay);
+        } else if (transitionDirection === 'toDark' && definition === darkFadeVariants.animate) {
+            completeActualThemeSwap();
+        }
     }
-    return () => clearTimeout(timer);
-  }, [isTransitioning, transitionDirection, completeActualThemeSwap]);
+  };
+
 
   return (
-    <AnimatePresence onExitComplete={finalizeTransition}>
-      {isTransitioning && transitionDirection === 'toLight' && (
+    <AnimatePresence onExitComplete={cleanupAfterOverlayExit}>
+      {isOverlayVisible && transitionDirection === 'toLight' && (
         <motion.div
           key="light-wash-overlay"
           style={{
@@ -67,9 +81,10 @@ const ThemeTransitionOverlay: React.FC = () => {
           initial="initial"
           animate="animate"
           exit="exit"
+          onAnimationComplete={handleEntryAnimationComplete}
         />
       )}
-      {isTransitioning && transitionDirection === 'toDark' && (
+      {isOverlayVisible && transitionDirection === 'toDark' && (
         <motion.div
           key="dark-fade-overlay"
           style={{
@@ -80,6 +95,7 @@ const ThemeTransitionOverlay: React.FC = () => {
           initial="initial"
           animate="animate"
           exit="exit"
+          onAnimationComplete={handleEntryAnimationComplete}
         />
       )}
     </AnimatePresence>

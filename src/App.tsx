@@ -13,7 +13,7 @@ import ThemeTransitionOverlay from './components/ThemeTransitionOverlay'; // Imp
 const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
 
 const App: React.FC = () => {
-  const { theme, initiateThemeChange, isTransitioning } = useTheme(); // Use new context values
+  const { theme, initiateThemeChange, isLogicTransitioning } = useTheme(); // Use new context values
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [episodesData] = useState<Episode[]>(allEpisodes);
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null);
@@ -130,8 +130,8 @@ const App: React.FC = () => {
       <Header />
       
       <button 
-        onClick={initiateThemeChange} // Use new function from context
-        disabled={isTransitioning} // Disable button during transition
+        onClick={initiateThemeChange} 
+        disabled={isLogicTransitioning} // Use isLogicTransitioning to disable button
         className="fixed top-4 right-4 z-50 p-3 rounded-md theme-transition shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)]"
         style={{
             backgroundColor: 'var(--current-color-surface)', 
