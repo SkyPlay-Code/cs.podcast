@@ -8,40 +8,6 @@
   --theme-fade-duration: 600ms; /* For general element cross-fades */
   --theme-timing-function: ease-in-out;
 
-<<<<<<< HEAD
-  /* Material Textures (Prerequisites - use placeholder URLs for now) */
-  --texture-dark-walnut: url('/textures/dark-walnut.jpg');
-  --texture-creamy-vellum: url('/textures/creamy-vellum.jpg');
-
-  /* Base Palette for Dark Theme (Default) - "Dimly Lit Study" */
-  --color-accent-dark: #D4AF37; /* Brushed Gold */
-  --color-accent-dark-secondary: #E0C670; /* Lighter Gold */
-  --color-text-dark: #EAE6E1; /* Warm Off-White */
-  --color-text-secondary-dark: #b0a9a1; /* Muted Off-White */
-  --material-surface-dark: var(--texture-dark-walnut);
-  --material-console-dark-bg: linear-gradient(180deg, #2a2624, #1c1a18); /* Brushed Dark Bronze */
-  --color-surface-card-dark: rgba(30, 28, 26, 0.85); /* Slightly transparent dark surface for cards on wood */
-  --color-border-dark: rgba(212, 175, 55, 0.3); /* Faint gold border */
-  --shadow-properties-dark: 0 8px 30px rgba(0, 0, 0, 0.5); /* Deeper shadows for dim light */
-  --backdrop-blur-dark: blur(8px); /* Subtle blur for elements like CommandDeck */
-
-
-  /* Base Palette for Light Theme - "Sunlit Study" */
-  --color-accent-light: #8B6F1E; /* Darker, non-glowing gold */
-  --color-accent-light-secondary: #A4884B; /* Lighter version */
-  --color-text-light: #413A30; /* Aged Sepia Ink */
-  --color-text-secondary-light: #7a6b5c; /* Muted Sepia */
-  --material-surface-light: var(--texture-creamy-vellum);
-  --material-console-light-bg: linear-gradient(180deg, #FDFBF5, #F4F1E9); /* Polished Off-White Marble */
-  --color-surface-card-light: #FFFFFF; /* Opaque white/cream for cards on vellum */
-  --color-border-light: #DCD0C0; /* Soft, aged paper border */
-  --shadow-properties-light: 0 6px 20px rgba(93, 64, 55, 0.12); /* Softer shadows for bright light */
-
-  /* Lamp Transition Specific */
-  --color-light-wash-start: rgba(244, 241, 233, 1);
-  --color-light-wash-end: rgba(244, 241, 233, 0);
-  --dark-overlay-color: rgba(28, 26, 24, 0.95); /* For fading to dark */
-=======
   /* Material Textures */
   --texture-dark-walnut: url('/textures/dark-walnut.jpg');
   --texture-creamy-vellum: url('/textures/creamy-vellum.jpg');
@@ -57,10 +23,11 @@
   --color-surface-card-dark: rgba(30, 28, 26, 0.85);
   --color-border-dark: rgba(212, 175, 55, 0.3);
   --shadow-properties-dark: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-console-edge-dark: inset 0 2px 3px -1px rgba(0,0,0,0.6); /* Harder edge for console */
   --backdrop-blur-dark: blur(8px);
 
   /* Base Palette for Light Theme */
-  --color-accent-light: #8B6F1E;
+  --color-accent-light: #8B6F1E; 
   --rgb-accent-light-val: 139, 111, 30;
   --color-accent-light-secondary: #A4884B;
   --color-text-light: #413A30;
@@ -70,6 +37,8 @@
   --color-surface-card-light: #FFFFFF;
   --color-border-light: #DCD0C0;
   --shadow-properties-light: 0 6px 20px rgba(93, 64, 55, 0.12);
+  --shadow-console-edge-light: inset 0 2px 3px -1px rgba(0,0,0,0.25); /* Harder edge for console */
+
 
   /* Lamp Transition */
   --color-light-wash-start: rgba(244, 241, 233, 1);
@@ -77,30 +46,13 @@
   --dark-overlay-color: rgba(28, 26, 24, 0.95);
 
   /* TomeSpine Specific Shadows (Defaults to dark theme values, overridden by body[data-theme]) */
-  --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val);
+  --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val); /* Default, overridden below */
   --tomespine-glow-shadow-static: 0 0 25px 5px rgba(var(--tomespine-glow-shadow-color-rgb-val), 0.3);
   --tomespine-glow-shadow-pulsing: 0 0 35px 10px rgba(var(--tomespine-glow-shadow-color-rgb-val), 0.45);
->>>>>>> 75b475c (Initial commit of project files)
 }
 
 body[data-theme='dark'] {
   --current-material-surface: var(--material-surface-dark);
-<<<<<<< HEAD
-  --current-color-background-fallback: #1c1a18; /* Fallback if texture fails */
-  
-  --current-color-surface: var(--color-surface-card-dark);
-  --current-color-console-bg: var(--material-console-dark-bg);
-  --current-color-border: var(--color-border-dark);
-  
-  --current-color-text-primary: var(--color-text-dark);
-  --current-color-text-secondary: var(--color-text-secondary-dark);
-  
-  --current-color-accent-primary: var(--color-accent-dark);
-  --current-color-accent-secondary: var(--color-accent-dark-secondary);
-  
-  --current-shadow-properties: var(--shadow-properties-dark);
-  --current-backdrop-blur: var(--backdrop-blur-dark);
-=======
   --current-color-background-fallback: #1c1a18;
   --current-color-surface: var(--color-surface-card-dark);
   --current-color-console-bg: var(--material-console-dark-bg);
@@ -110,30 +62,15 @@ body[data-theme='dark'] {
   --current-color-accent-primary: var(--color-accent-dark);
   --current-color-accent-secondary: var(--color-accent-dark-secondary);
   --current-shadow-properties: var(--shadow-properties-dark);
+  --current-shadow-console-edge: var(--shadow-console-edge-dark);
   --current-backdrop-blur: var(--backdrop-blur-dark);
+  --current-rgb-accent-primary-val: var(--rgb-accent-dark-val);
 
   --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-dark-val);
->>>>>>> 75b475c (Initial commit of project files)
 }
 
 body[data-theme='light'] {
   --current-material-surface: var(--material-surface-light);
-<<<<<<< HEAD
-  --current-color-background-fallback: #FDFBF6; /* Fallback if texture fails */
-
-  --current-color-surface: var(--color-surface-card-light);
-  --current-color-console-bg: var(--material-console-light-bg);
-  --current-color-border: var(--color-border-light);
-
-  --current-color-text-primary: var(--color-text-light);
-  --current-color-text-secondary: var(--color-text-secondary-light);
-
-  --current-color-accent-primary: var(--color-accent-light);
-  --current-color-accent-secondary: var(--color-accent-light-secondary);
-  
-  --current-shadow-properties: var(--shadow-properties-light);
-  --current-backdrop-blur: none; /* No blur for light theme by default */
-=======
   --current-color-background-fallback: #FDFBF6;
   --current-color-surface: var(--color-surface-card-light);
   --current-color-console-bg: var(--material-console-light-bg);
@@ -143,10 +80,11 @@ body[data-theme='light'] {
   --current-color-accent-primary: var(--color-accent-light);
   --current-color-accent-secondary: var(--color-accent-light-secondary);
   --current-shadow-properties: var(--shadow-properties-light);
-  --current-backdrop-blur: none;
+  --current-shadow-console-edge: var(--shadow-console-edge-light);
+  --current-backdrop-blur: none; /* No blur for light theme console by default */
+  --current-rgb-accent-primary-val: var(--rgb-accent-light-val);
 
   --tomespine-glow-shadow-color-rgb-val: var(--rgb-accent-light-val);
->>>>>>> 75b475c (Initial commit of project files)
 }
 
 body {
@@ -155,51 +93,22 @@ body {
   background-size: cover;
   background-position: center center;
   background-color: var(--current-color-background-fallback);
-<<<<<<< HEAD
-  
-  color: var(--current-color-text-primary);
-  font-family: 'Inter', 'Poppins', sans-serif;
-  
-  /* Font Smoothing */
-  font-smoothing: antialiased;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* No transition on body directly for background-image, it's swapped. 
-     Color can transition if it makes sense with the overlay. */
-  transition: color var(--theme-fade-duration) var(--theme-timing-function);
-=======
   color: var(--current-color-text-primary);
   font-family: 'Inter', 'Poppins', sans-serif;
   font-smoothing: antialiased;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: color var(--theme-fade-duration) var(--theme-timing-function), background-color var(--theme-fade-duration) var(--theme-timing-function);
-  /* background-image transition is tricky and usually instant swap is better with overlay */
->>>>>>> 75b475c (Initial commit of project files)
 }
 
-/* General transition for themeable properties on components */
 .theme-transition {
-<<<<<<< HEAD
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity;
-  transition-duration: var(--theme-fade-duration); /* Use fade for elements */
-=======
   transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity, background-image;
   transition-duration: var(--theme-fade-duration);
->>>>>>> 75b475c (Initial commit of project files)
   transition-timing-function: var(--theme-timing-function);
 }
 
-/* Specific for console background which is a gradient */
 .console-theme-transition {
-<<<<<<< HEAD
-  transition-property: background, box-shadow, border-color, color, opacity;
-  transition-duration: var(--theme-fade-duration);
-  transition-timing-function: var(--theme-timing-function);
-}
-=======
-  transition-property: background, box-shadow, border-color, color, opacity; /* 'background' covers gradients */
+  transition-property: background, box-shadow, border-color, color, opacity; 
   transition-duration: var(--theme-fade-duration);
   transition-timing-function: var(--theme-timing-function);
 }
@@ -217,4 +126,14 @@ body {
 .tomespine-pulsing {
   animation: pulseShadow 2s infinite ease-in-out;
 }
->>>>>>> 75b475c (Initial commit of project files)
+
+/* Keyframes for Molten Gold Shimmer */
+@keyframes moltenGoldShimmer {
+  0% { background-position: 200% center; } /* Start from one side */
+  100% { background-position: -100% center; } /* Move to the other */
+}
+
+.molten-gold-fill {
+  /* background-size: 200% 100%; Ensure this is set on the element if not here */
+  animation: moltenGoldShimmer 3s linear infinite;
+}

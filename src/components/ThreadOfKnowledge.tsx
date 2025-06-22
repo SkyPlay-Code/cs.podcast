@@ -1,90 +1,105 @@
 
-import React, { useState, useRef } from 'react';
-import { motion, PanInfo, useMotionValue } from 'framer-motion';
-// import { useTheme } from '../contexts/ThemeContext'; // Theme handled by CSS vars
-import ScrubberOrb from './ScrubberOrb';
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, useMotionValue, PanInfo, AnimatePresence } from 'framer-motion';
+import GoldenSphere from './GoldenSphere'; // Updated from ScrubberOrb
 import { formatTime } from '../utils/time';
 
-interface ThreadOfKnowledgeProps {
+interface ProgressBarInlayProps { // Renamed from ThreadOfKnowledgeProps
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
 }
 
-const ThreadOfKnowledge: React.FC<ThreadOfKnowledgeProps> = ({ currentTime, duration, onSeek }) => {
-  // const { theme } = useTheme(); 
-  const [isDragging, setIsDragging] = useState(false);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  
-  const dragX = useMotionValue(0);
+const ProgressBarInlay: React.FC<ProgressBarInlayProps> = ({ currentTime, duration, onSeek }) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isInteracting, setIsInteracting] = useState(false); // Combines dragging and track click states
   const [tooltipTime, setTooltipTime] = useState<number | null>(null);
-  const [isHovering, setIsHovering] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipX, setTooltipX] = useState(0);
 
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const scrubberX = useMotionValue(0); // Motion value for GoldenSphere's X position
+
   const safeCurrentTime = Number.isFinite(currentTime) ? currentTime : 0;
   const safeDuration = Number.isFinite(duration) ? duration : 0;
 
-  const handleInteractionStart = (event: React.MouseEvent | React.TouchEvent | React.PointerEvent | React.KeyboardEvent) => {
-    // For click/tap/drag start
-    setIsDragging(true); // Simplified: dragging also covers click seeking state
-    if (progressBarRef.current && safeDuration > 0 && 'clientX' in event) { // Click/Tap
-        const rect = progressBarRef.current.getBoundingClientRect();
-        const clickX = (event as React.MouseEvent).clientX - rect.left;
-        const seekPercentage = Math.max(0, Math.min(1, clickX / rect.width));
-        const newTime = seekPercentage * safeDuration;
-        onSeek(newTime);
-        setTooltipTime(newTime); // Show tooltip on click as well
-    } else if ('key' in event) { // Keyboard
-        // Keyboard seeking logic
-        let newTime = safeCurrentTime;
-        if (event.key === 'ArrowLeft') newTime = Math.max(0, safeCurrentTime - 5);
-        else if (event.key === 'ArrowRight') newTime = Math.min(safeDuration, safeCurrentTime + 5);
-        else if (event.key === 'Home') newTime = 0;
-        else if (event.key === 'End') newTime = safeDuration;
-        
-        if (newTime !== safeCurrentTime) {
-            onSeek(newTime);
-            setTooltipTime(newTime);
-        }
+  // Update scrubber and fill when currentTime or duration changes externally
+  useEffect(() => {
+    if (trackRef.current && safeDuration > 0 && !isInteracting) {
+      const newX = (safeCurrentTime / safeDuration) * trackRef.current.offsetWidth;
+      scrubberX.set(newX);
+    }
+  }, [safeCurrentTime, safeDuration, scrubberX, isInteracting]);
+
+
+  const calculateTimeFromX = useCallback((xPosition: number) => {
+    if (trackRef.current && safeDuration > 0) {
+      const rect = trackRef.current.getBoundingClientRect();
+      const seekPercentage = Math.max(0, Math.min(1, xPosition / rect.width));
+      return seekPercentage * safeDuration;
+    }
+    return 0;
+  }, [safeDuration]);
+
+  // Handle track click for seeking
+  const handleTrackClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (trackRef.current && safeDuration > 0) {
+      const rect = trackRef.current.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const newTime = calculateTimeFromX(clickX);
+      onSeek(newTime);
+      scrubberX.set(clickX); // Move scrubber immediately on click
+      
+      // Show tooltip briefly on click
+      setTooltipTime(newTime);
+      setTooltipX(clickX);
+      setTooltipVisible(true);
+      setTimeout(() => setTooltipVisible(false), 1000);
     }
   };
   
-  const handlePan = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (!progressBarRef.current || safeDuration <= 0) return;
-    
-    const rect = progressBarRef.current.getBoundingClientRect();
-    // Calculate newX based on the direct pointer position relative to the bar's start
-    // This assumes the pointer event's clientX is available and relevant
-    let pointerX = 0;
-    if ('clientX' in event) pointerX = (event as MouseEvent).clientX;
-    else if ('touches' in event && event.touches.length > 0) pointerX = (event as TouchEvent).touches[0].clientX;
+  // Handle dragging of GoldenSphere
+  const handleSphereDragStart = () => {
+    setIsInteracting(true);
+    setTooltipVisible(true);
+  };
 
-    const newX = Math.max(0, Math.min(pointerX - rect.left, rect.width));
-    dragX.set(newX); 
-
-    const seekPercentage = newX / rect.width;
-    const newTime = seekPercentage * safeDuration;
+  const handleSphereDrag = (newX: number) => {
+    if (!trackRef.current) return;
+    const newTime = calculateTimeFromX(newX);
     setTooltipTime(newTime);
-    onSeek(newTime); // Seek live during pan
+    setTooltipX(newX); // Update tooltip X based on sphere's actual dragged X
+    // Live seek can be performance intensive, consider debouncing or seeking onDragEnd only
+    // For now, live seek:
+    onSeek(newTime);
+  };
+
+  const handleSphereDragEnd = () => {
+    setIsInteracting(false);
+    setTooltipVisible(false);
+    // Final seek call to ensure consistency if onDrag was debounced
+    const finalX = scrubberX.get();
+    const finalTime = calculateTimeFromX(finalX);
+    onSeek(finalTime);
   };
   
-  const handleInteractionEnd = () => {
-    setIsDragging(false);
-    setTooltipTime(null);
+  const handleTrackHover = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (trackRef.current && safeDuration > 0 && !isInteracting) {
+        const rect = trackRef.current.getBoundingClientRect();
+        const hoverX = event.clientX - rect.left;
+        setTooltipTime(calculateTimeFromX(hoverX));
+        setTooltipX(hoverX);
+        setTooltipVisible(true);
+    }
   };
 
-  const trackStyle: React.CSSProperties = {
-    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)', 
-    backgroundColor: 'var(--current-color-border)', // Use border or a muted color from theme
-    height: '8px', 
-    borderRadius: '4px',
+  const handleTrackLeave = () => {
+    if (!isInteracting) {
+        setTooltipVisible(false);
+    }
   };
 
-  const fillStyle: React.CSSProperties = {
-    background: `linear-gradient(90deg, var(--current-color-accent-primary), var(--current-color-accent-secondary))`,
-    height: '100%',
-    borderRadius: '4px',
-  };
+  const fillPercentage = safeDuration > 0 ? (safeCurrentTime / safeDuration) * 100 : 0;
 
   return (
     <div className="w-full flex items-center gap-2 px-1 relative">
@@ -92,60 +107,79 @@ const ThreadOfKnowledge: React.FC<ThreadOfKnowledgeProps> = ({ currentTime, dura
         {formatTime(safeCurrentTime)}
       </span>
 
-      <motion.div
-        ref={progressBarRef}
-        className="group flex-1 h-6 flex items-center cursor-grab relative touch-none" // touch-none for better pan
-        onPointerDown={handleInteractionStart as any} // Use pointer events for unified mouse/touch
-        onPanStart={() => setIsDragging(true)} // Keep isDragging for ScrubberOrb visual state
-        onPan={handlePan}
-        onPanEnd={handleInteractionEnd}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => { if (!isDragging) setIsHovering(false); }}
-        onFocus={() => setIsHovering(true)}
-        onBlur={() => { if (!isDragging) setIsHovering(false); }}
+      <div
+        ref={trackRef}
+        className="group flex-1 h-6 flex items-center cursor-pointer relative touch-none"
+        style={{
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)', // Carved channel
+          backgroundColor: 'rgba(0,0,0,0.2)', // Darkens the channel
+          height: '12px', // Height for the channel effect
+          borderRadius: '6px',
+        }}
+        onClick={handleTrackClick}
+        onMouseMove={handleTrackHover}
+        onMouseLeave={handleTrackLeave}
         role="slider"
         aria-valuenow={safeCurrentTime}
         aria-valuemin={0}
         aria-valuemax={safeDuration}
         aria-label="Audio progress"
-        tabIndex={0}
-        onKeyDown={handleInteractionStart as any}
+        tabIndex={0} // Make focusable for potential keyboard controls (not fully implemented here)
+        onKeyDown={(e) => { // Basic keyboard seeking example
+          let newTime = safeCurrentTime;
+          if (e.key === 'ArrowLeft') newTime = Math.max(0, safeCurrentTime - 5);
+          else if (e.key === 'ArrowRight') newTime = Math.min(safeDuration, safeCurrentTime + 5);
+          if (newTime !== safeCurrentTime) onSeek(newTime);
+        }}
       >
-        <div className="relative w-full" style={trackStyle}>
-          <motion.div
-            style={fillStyle}
-            animate={{ width: `${progressPercentage}%` }}
-            transition={{ type: 'spring' as const, stiffness: 150, damping: 25, mass:0.5 }}
-          />
-          <ScrubberOrb 
-            progressPercentage={progressPercentage} 
-            isDragging={isDragging || isHovering} // Orb active on hover too
-          />
-        </div>
-      </motion.div>
-      
-      {(isDragging || (isHovering && tooltipTime === null)) && progressBarRef.current && (
+        {/* Fill for molten gold */}
         <motion.div
-          className="absolute text-xs p-1 rounded theme-transition shadow-lg pointer-events-none"
+          className="molten-gold-fill" // Class for shimmer animation
           style={{
-            backgroundColor: 'var(--current-color-surface)',
-            color: 'var(--current-color-text-primary)',
-            border: '1px solid var(--current-color-border)',
-            x: progressBarRef.current ? (safeCurrentTime / safeDuration) * progressBarRef.current.offsetWidth : 0, 
-            bottom: '100%', 
-            marginBottom: '8px',
-            left: 0, 
-            transform: 'translateX(-50%)',
-            minWidth: '40px',
-            textAlign: 'center',
+            width: `${fillPercentage}%`,
+            background: 'linear-gradient(90deg, #D4AF37, #FFD700)', // Molten gold
+            backgroundSize: '200% 100%', // For shimmer animation
+            height: '100%',
+            borderRadius: '6px', // Match channel's border radius
           }}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{opacity:0, y:5}}
-        >
-          {formatTime(tooltipTime !== null ? tooltipTime : safeCurrentTime)}
-        </motion.div>
-      )}
+          transition={{ type: 'spring', stiffness: 150, damping: 25, mass: 0.5 }}
+        />
+        
+        <GoldenSphere
+          xMotionValue={scrubberX}
+          constraintsRef={trackRef}
+          onDragStart={handleSphereDragStart}
+          onDrag={handleSphereDrag}
+          onDragEnd={handleSphereDragEnd}
+          isInteracting={isInteracting}
+        />
+      </div>
+      
+      {/* Tooltip */}
+      <AnimatePresence>
+        {tooltipVisible && tooltipTime !== null && (
+          <motion.div
+            className="absolute text-xs p-1 rounded theme-transition shadow-lg pointer-events-none whitespace-nowrap"
+            style={{
+              backgroundColor: 'var(--current-color-surface)',
+              color: 'var(--current-color-text-primary)',
+              border: '1px solid var(--current-color-border)',
+              bottom: '100%', 
+              marginBottom: '8px',
+              left: tooltipX, // Position based on hover/drag X
+              transform: 'translateX(-50%)',
+              minWidth: '40px',
+              textAlign: 'center',
+            }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5, transition: {duration: 0.1} }}
+            transition={{duration: 0.15}}
+          >
+            {formatTime(tooltipTime)}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <span className="text-xs font-mono tabular-nums w-12 text-left theme-transition" style={{color: 'var(--current-color-text-secondary)'}}>
         {formatTime(safeDuration)}
@@ -154,4 +188,4 @@ const ThreadOfKnowledge: React.FC<ThreadOfKnowledgeProps> = ({ currentTime, dura
   );
 };
 
-export default ThreadOfKnowledge;
+export default ProgressBarInlay;

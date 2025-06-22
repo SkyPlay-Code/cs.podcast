@@ -2,12 +2,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Episode } from '../types';
-// import { useTheme } from '../contexts/ThemeContext'; // Not strictly needed
 import PlayerControls from './PlayerControls';
-import ThreadOfKnowledge from './ThreadOfKnowledge';
+import ProgressBarInlay from './ProgressBarInlay'; // Updated from ThreadOfKnowledge
 import { formatTime } from '../utils/time';
 
-interface CommandDeckProps {
+interface ConsoleProps { // Renamed from CommandDeckProps
   episode: Episode;
   isPlaying: boolean;
   duration: number;
@@ -21,14 +20,12 @@ interface CommandDeckProps {
   onPlaybackRateChange: () => void;
 }
 
-const CommandDeck: React.FC<CommandDeckProps> = ({
+const Console: React.FC<ConsoleProps> = ({ // Renamed from CommandDeck
   episode, isPlaying, duration, currentTime, playbackRate,
   onPlayPause, onNext, onPrevious, onSeek, onSkip, onPlaybackRateChange
 }) => {
-  // const { theme } = useTheme(); // CSS vars handle theme styling
-
   const playerVariants = {
-    hidden: { y: '100%', opacity: 0.8 }, // Start slightly visible if desired
+    hidden: { y: '100%', opacity: 0.8 },
     visible: { 
       y: '0%', 
       opacity: 1,
@@ -37,29 +34,25 @@ const CommandDeck: React.FC<CommandDeckProps> = ({
     exit: { y: '100%', opacity: 0, transition: { duration: 0.4, ease: "easeIn" as const } }
   };
   
-  const deckStyles: React.CSSProperties = {
+  const consoleStyles: React.CSSProperties = {
     color: 'var(--current-color-text-primary)',
-    background: 'var(--current-color-console-bg)', // Use console gradient
-    boxShadow: 'var(--current-shadow-properties)', 
+    background: 'var(--current-color-console-bg)',
+    // Inset top shadow for hard edge, combined with overall elevation shadow
+    boxShadow: 'var(--current-shadow-console-edge), var(--current-shadow-properties)', 
     borderTop: '1px solid var(--current-color-border)', 
-    // Apply backdrop blur if defined for the theme, and if browser supports it
-    // Note: backdrop-filter might need a semi-transparent background to be visible.
-    // The --current-color-console-bg is a gradient, so backdrop-blur might not be directly applicable to IT
-    // but rather to a container that MIGHT be semi-transparent and sit ON the console.
-    // For now, relying on the solid/gradient console background.
-    // If a glassy effect on top of the console is desired, structure would need adjustment.
   };
   
-  // Apply backdrop-filter if the theme defines it (e.g., for dark theme)
-  // This is tricky because CSS variables can't directly enable/disable properties like backdrop-filter
-  // A class or direct style check might be better if blur is conditional.
-  // For simplicity, if --current-backdrop-blur is 'none', it won't apply. Otherwise, it will.
-  if (getComputedStyle(document.body).getPropertyValue('--current-backdrop-blur').trim() !== 'none') {
-    deckStyles.backdropFilter = 'var(--current-backdrop-blur)';
-    // Ensure background is semi-transparent for backdrop-filter to show through
-    // This conflicts with a solid gradient. Consider if CommandDeck itself should be semi-transparent
-    // or if the --current-color-console-bg should be a semi-transparent gradient.
-    // For this iteration, let's assume --current-color-console-bg can be solid.
+  // Apply backdrop-filter if the theme defines it and it's not 'none'
+  // Note: This requires the background to be semi-transparent to see the blur effect.
+  // --current-color-console-bg is a gradient; if it's opaque, backdrop-filter won't be visible.
+  // We'll assume the gradient might have some transparency or this is for future flexibility.
+  if (typeof window !== 'undefined') { // Ensure this runs client-side
+    const currentBackdropBlur = getComputedStyle(document.body).getPropertyValue('--current-backdrop-blur').trim();
+    if (currentBackdropBlur !== 'none') {
+      consoleStyles.backdropFilter = 'var(--current-backdrop-blur)';
+      // Example: if console-bg could be semi-transparent:
+      // consoleStyles.backgroundColor = 'rgba(var(--some-rgb-color), 0.8)'; // If console-bg was a solid color
+    }
   }
 
 
@@ -69,8 +62,9 @@ const CommandDeck: React.FC<CommandDeckProps> = ({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="fixed bottom-0 left-0 right-0 z-40 console-theme-transition" // Use console-theme-transition for background
-      style={deckStyles}
+      className="fixed bottom-0 left-0 right-0 z-40 console-theme-transition"
+      style={consoleStyles}
+      aria-label="Audio Player Console"
     >
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-4 items-center p-3 md:p-4 gap-3 md:gap-4 relative">
         <div className="md:col-span-1 flex items-center gap-3 min-w-0">
@@ -96,7 +90,7 @@ const CommandDeck: React.FC<CommandDeckProps> = ({
             onSkip={onSkip}
             onPlaybackRateChange={onPlaybackRateChange}
           />
-          <ThreadOfKnowledge
+          <ProgressBarInlay // Updated from ThreadOfKnowledge
             currentTime={currentTime}
             duration={duration}
             onSeek={onSeek}
@@ -115,4 +109,4 @@ const CommandDeck: React.FC<CommandDeckProps> = ({
   );
 };
 
-export default CommandDeck;
+export default Console;
