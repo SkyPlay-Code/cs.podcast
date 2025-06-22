@@ -1,58 +1,70 @@
 
 import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
-import { SkipForwardIcon, SkipBackwardIcon, NextIcon, PreviousIcon } from './icons/PlaybackIcons'; // Keep using existing static icons
+import { SkipForwardIcon, SkipBackwardIcon, NextIcon, PreviousIcon } from './icons/PlaybackIcons';
 import PlayPauseIcon from './icons/PlayPauseIcon';
-import { useTheme } from '../contexts/ThemeContext';
+// import { useTheme } from '../contexts/ThemeContext'; // Theme handled by CSS vars
 
-// Define the props specific to QuantumTriggerButton's unique features
 interface QuantumTriggerCustomProps {
   children: React.ReactNode;
-  ariaLabel: string; // Will be mapped to 'aria-label'
+  ariaLabel: string;
   iconClassName?: string;
+  isMainPlayPause?: boolean;
+  isTextButton?: boolean; // For playback rate button
 }
 
-// Define the props that will be forwarded to motion.button, omitting those handled by CustomProps or defined inline
 type ForwardedMotionProps = Omit<
   HTMLMotionProps<'button'>, 
   keyof QuantumTriggerCustomProps | 'aria-label' | 'style' | 'whileHover' | 'whileTap' | 'transition'
 >;
 
-// Combine custom props with the allowed/forwarded motion props
 type QuantumTriggerButtonProps = QuantumTriggerCustomProps & ForwardedMotionProps;
 
 const QuantumTriggerButton: React.FC<QuantumTriggerButtonProps> = ({ 
   children, 
   ariaLabel, 
-  className, // className comes from ForwardedMotionProps, intended for the motion.button
-  iconClassName, 
-  ...restMotionProps // These are the remaining, compatible HTMLMotionProps
+  className,
+  // iconClassName, // Not directly used on span anymore
+  isMainPlayPause = false,
+  isTextButton = false,
+  ...restMotionProps 
 }) => {
+  // const { theme } = useTheme(); // CSS vars for styling
+
+  const buttonBaseStyle: React.CSSProperties = {
+    color: isMainPlayPause ? 'var(--current-color-surface)' : 'var(--current-color-text-secondary)',
+    backgroundColor: isMainPlayPause ? 'var(--current-color-accent-primary)' : 'transparent',
+    border: isMainPlayPause ? '1px solid var(--current-color-accent-secondary)' : '1px solid transparent',
+    boxShadow: isMainPlayPause ? 'var(--current-shadow-properties)' : 'none',
+  };
+
+  const hoverStyle = { 
+    scale: 1.08,
+    color: isTextButton || !isMainPlayPause ? 'var(--current-color-accent-primary)' : 'var(--current-color-surface)',
+    backgroundColor: isMainPlayPause ? 'var(--current-color-accent-secondary)' : 'transparent',
+    // boxShadow: isMainPlayPause ? `0 0 10px var(--current-color-accent-primary)` : 'none',
+  };
+
   return (
     <motion.button
-      {...restMotionProps} // Spread compatible motion props
+      {...restMotionProps}
       aria-label={ariaLabel}
-      className={`p-2 rounded-full relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)] theme-transition ${className || ''}`}
-      style={{ color: 'var(--current-color-text-secondary)' }}
-      whileHover={{ 
-        scale: 1.1, 
-        color: 'var(--current-color-accent-primary)',
-      }}
-      whileTap={{ scale: 0.9, y: 1 }}
-      transition={{ type: 'spring' as const, stiffness: 400, damping: 15 }}
+      className={`p-2 rounded-full relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)] theme-transition console-theme-transition ${isMainPlayPause ? 'w-12 h-12 sm:w-14 sm:h-14' : ''} ${isTextButton ? 'px-2' : ''} ${className || ''}`}
+      style={buttonBaseStyle}
+      whileHover={hoverStyle}
+      whileTap={{ scale: 0.92, y: 1 }}
+      transition={{ type: 'spring' as const, stiffness: 350, damping: 15 }}
     >
-      <motion.span 
-        className={`block ${iconClassName || ''}`} 
-        whileHover={{scale: 1.2}} 
-        transition={{type: 'spring' as const, stiffness:300, damping:10}}
-      >
-         {children}
-      </motion.span>
-      <motion.span
-        className="absolute inset-0 rounded-full opacity-0"
-        style={{ backgroundColor: 'var(--current-color-accent-primary)'}}
-        whileTap={{ scale: [0, 2], opacity: [0.7, 0], transition: { duration: 0.4, ease:"easeOut" as const } }}
-      />
+      {children}
+      {/* Subtle shockwave for secondary buttons */}
+      {!isMainPlayPause && !isTextButton && (
+        <motion.span
+            className="absolute inset-0 rounded-full opacity-0"
+            style={{ backgroundColor: 'var(--current-color-accent-primary)'}}
+            // Adjust scale and opacity for a more subtle material interaction "ripple"
+            whileTap={{ scale: [0, 1.5], opacity: [0.2, 0], transition: { duration: 0.35, ease:"easeOut" as const } }}
+        />
+      )}
     </motion.button>
   );
 };
@@ -71,8 +83,8 @@ interface PlayerControlsProps {
 const PlayerControls: React.FC<PlayerControlsProps> = ({
   isPlaying, playbackRate, onPlayPause, onNext, onPrevious, onSkip, onPlaybackRateChange
 }) => {
-  const { theme } = useTheme();
-  const playPauseColor = theme === 'dark' ? 'var(--color-background-dark)' : 'var(--color-surface-light)';
+  // Main play/pause icon color needs to contrast with its accent background
+  const mainPlayPauseIconColor = 'var(--current-color-surface)'; // Or a specific color for text on accent
 
   return (
     <div className="flex items-center justify-center gap-2 sm:gap-3 w-full">
@@ -80,9 +92,12 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
       <QuantumTriggerButton
         onClick={onPlaybackRateChange}
         ariaLabel={`Change playback speed. Current speed: ${playbackRate}x`}
-        className="w-12 text-sm font-mono py-2 px-1" // No rounded-full for text button
+        className="w-14 text-sm font-mono" 
+        isTextButton={true}
       >
-        {playbackRate.toFixed(2)}x
+        <span style={{color: 'var(--current-color-text-secondary)'}} className="group-hover:text-[var(--current-color-accent-primary)] theme-transition">
+         {playbackRate.toFixed(2)}x
+        </span>
       </QuantumTriggerButton>
 
       <QuantumTriggerButton onClick={() => onSkip(-15)} ariaLabel="Skip 15 seconds backward">
@@ -93,30 +108,14 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         <PreviousIcon className="w-6 h-6 sm:w-7 sm:h-7" />
       </QuantumTriggerButton>
 
-      {/* Main Play/Pause Button */}
-      <motion.button
+      <QuantumTriggerButton
         onClick={onPlayPause}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center relative overflow-hidden shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)] theme-transition"
-        style={{ 
-            backgroundColor: 'var(--current-color-accent-primary)',
-            color: playPauseColor
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: 'spring' as const, stiffness: 300, damping: 15 }}
+        ariaLabel={isPlaying ? 'Pause' : 'Play'}
+        isMainPlayPause={true}
+        className="flex items-center justify-center"
       >
-        <PlayPauseIcon isPlaying={isPlaying} className="w-6 h-6 sm:w-7 sm:h-7" color={playPauseColor}/>
-        {/* Active Play Indicator Ring - conceptual */}
-        {isPlaying && (
-            <motion.div 
-                className="absolute inset-0 border-2 rounded-full"
-                style={{borderColor: playPauseColor}}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" as const }}
-            />
-        )}
-      </motion.button>
+        <PlayPauseIcon isPlaying={isPlaying} className="w-6 h-6 sm:w-7 sm:h-7" color={mainPlayPauseIconColor}/>
+      </QuantumTriggerButton>
 
       <QuantumTriggerButton onClick={onNext} ariaLabel="Next track">
         <NextIcon className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -126,7 +125,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         <SkipForwardIcon className="w-5 h-5 sm:w-6 sm:h-6" />
       </QuantumTriggerButton>
 
-      <div className="w-12 hidden sm:block"></div> {/* Spacer */}
+      <div className="w-14 hidden sm:block"></div> {/* Spacer to balance playback rate button */}
     </div>
   );
 };

@@ -1,38 +1,53 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, MotionStyle } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ScrubberOrbProps {
   progressPercentage: number;
-  isDragging: boolean;
-  theme: 'light' | 'dark'; // Passed from parent for styling convenience
+  isDragging: boolean; // Renamed from isDragging to be more generic for hover state too
 }
 
-const ScrubberOrb: React.FC<ScrubberOrbProps> = ({ progressPercentage, isDragging, theme }) => {
-  const orbSize = isDragging ? 20 : 16; // Larger when dragging
-  const shadowIntensity = isDragging ? (theme === 'dark' ? '0 0 15px 3px' : '0 0 12px 2px') : (theme === 'dark' ? '0 0 10px' : '0 0 8px');
+const ScrubberOrb: React.FC<ScrubberOrbProps> = ({ progressPercentage, isDragging }) => {
+  const { theme } = useTheme(); 
+  const orbSize = isDragging ? 18 : 14; // Slightly larger when active
+  const shadowOpacity = isDragging ? 0.5 : 0.3;
+  const shadowBlur = isDragging ? '10px' : '6px';
   
+  const orbBaseStyle: MotionStyle = {
+    width: orbSize,
+    height: orbSize,
+    // Position orb based on progress. Ensure it's centered on the fill line end.
+    left: `calc(${progressPercentage}% - ${orbSize / 2}px)`, 
+    top: '50%', // Centered on the track, which is now 8px high
+    y: '-50%', // Framer motion transform for centering
+    backgroundColor: 'var(--current-color-accent-primary)',
+    // Dynamic shadow based on state for a more "alive" feel
+    boxShadow: `0 0 ${shadowBlur} rgba(var(--rgb-accent-primary-val, 212, 175, 55), ${shadowOpacity}), 0 1px 2px rgba(0,0,0,0.4)`,
+    // Border for definition, using surface color of the current theme
+    border: `2px solid var(--current-color-surface)`, 
+    borderRadius: '50%', // Ensure it's always a circle
+    position: 'absolute', // Positioned within the progress bar track
+    cursor: 'grab',
+    transition: 'width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease', // Smooth size and shadow changes
+  };
+  
+  // Define --rgb-accent-primary-val in global.css if not already, e.g.
+  // body[data-theme='dark'] { --rgb-accent-primary-val: 212, 175, 55; }
+  // body[data-theme='light'] { --rgb-accent-primary-val: 139, 111, 30; }
+
+
   return (
     <motion.div
-      className="absolute top-1/2 rounded-full cursor-grab"
-      style={{
-        width: orbSize,
-        height: orbSize,
-        // Calculate left position based on progress. Center orb on the progress line.
-        left: `calc(${progressPercentage}% - ${orbSize / 2}px)`, 
-        y: '-50%', // Vertically center on the track
-        background: `radial-gradient(circle, var(--current-color-accent-primary) 30%, ${theme === 'dark' ? 'var(--color-accent-secondary-dark)' : 'var(--current-color-accent-primary)'}99 100%)`,
-        boxShadow: `${shadowIntensity} var(--current-color-accent-primary)`,
-        border: `2px solid ${theme === 'dark' ? 'var(--color-background-dark)' : 'var(--color-surface-light)'}`, // Contrast border
-      }}
+      style={orbBaseStyle}
       animate={{
-        scale: isDragging ? 1.1 : [1, 1.05, 1], // Pulse animation when not dragging
-        boxShadow: `${shadowIntensity} var(--current-color-accent-primary)`,
+        scale: isDragging ? 1.1 : 1,
       }}
       transition={{
-        scale: isDragging ? { type: 'spring', stiffness: 300, damping: 20 } : { duration: 1.5, repeat: Infinity, ease: "easeInOut" },
-        boxShadow: { duration: 0.2 }
+        scale: { type: 'spring' as const, stiffness: 400, damping: 15 },
       }}
+      // The continuous pulse animation might be too much, focus on interactive feedback
+      // whileHover={{ scale: 1.1 }} // Already handled by isDragging prop effectively
     />
   );
 };

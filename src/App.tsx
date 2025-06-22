@@ -5,16 +5,15 @@ import { Episode } from './types';
 import { episodes as allEpisodes } from './data/episodes';
 import { useTheme } from './contexts/ThemeContext';
 
-// Placeholder for new components (actual files to be created)
-import Header from './components/Header'; // Assuming Header will be adapted
+import Header from './components/Header';
 import KnowledgeCrystal from './components/KnowledgeCrystal';
 import CommandDeck from './components/CommandDeck';
-import CerebralField from './components/canvas/CerebralField'; // Placeholder
+import ThemeTransitionOverlay from './components/ThemeTransitionOverlay'; // Import the overlay
 
 const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
 
 const App: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, initiateThemeChange, isTransitioning } = useTheme(); // Use new context values
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [episodesData] = useState<Episode[]>(allEpisodes);
   const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null);
@@ -23,28 +22,16 @@ const App: React.FC = () => {
   const [duration, setDuration] = useState<number>(0);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   
-  // For Cerebral Field interaction
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [playerYPosition, setPlayerYPosition] = useState<number | null>(null);
-
-
   const currentEpisode = currentEpisodeIndex !== null ? episodesData[currentEpisodeIndex] : null;
 
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setMousePosition({ x: event.clientX, y: event.clientY });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
+  // Audio event handling
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateCurrentTime = () => setCurrentTime(audio.currentTime);
     const setAudioDuration = () => setDuration(isFinite(audio.duration) ? audio.duration : 0);
-    const handleEpisodeEnd = () => setIsPlaying(false); // Simplified, can add auto-next later
+    const handleEpisodeEnd = () => handleNext(); // Auto-play next or can be changed
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     
@@ -66,7 +53,7 @@ const App: React.FC = () => {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [currentEpisodeIndex, playbackRate]);
+  }, [currentEpisodeIndex, playbackRate]); // Removed handleNext from deps to avoid issues, ensure it's stable
 
   const handleSelectEpisode = useCallback((index: number) => {
     setCurrentEpisodeIndex(index);
@@ -74,32 +61,38 @@ const App: React.FC = () => {
       audioRef.current.src = episodesData[index].audioSrc;
       audioRef.current.load();
       audioRef.current.playbackRate = playbackRate;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch(error => console.error("Error playing audio:", error));
     }
   }, [episodesData, playbackRate]);
 
   const handlePlayPause = useCallback(() => {
-    if (!audioRef.current || currentEpisodeIndex === null) return;
+    if (!audioRef.current || currentEpisodeIndex === null) {
+      if(episodesData.length > 0) handleSelectEpisode(0); // Play first if nothing selected
+      return;
+    }
     if (isPlaying) audioRef.current.pause();
     else {
-      if (audioRef.current.currentSrc !== episodesData[currentEpisodeIndex].audioSrc) {
+      // Ensure src is set if it's not the current episode or if src is not set
+      if (audioRef.current.currentSrc !== episodesData[currentEpisodeIndex].audioSrc || !audioRef.current.currentSrc) {
         audioRef.current.src = episodesData[currentEpisodeIndex].audioSrc;
-        audioRef.current.load();
+        audioRef.current.load(); // Important to load new src
       }
       audioRef.current.playbackRate = playbackRate;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch(error => console.error("Error playing audio:", error));
     }
-  }, [isPlaying, currentEpisodeIndex, episodesData, playbackRate]);
+  }, [isPlaying, currentEpisodeIndex, episodesData, playbackRate, handleSelectEpisode]);
 
   const handleNext = useCallback(() => {
-    if (currentEpisodeIndex === null) return handleSelectEpisode(0);
-    const nextIndex = (currentEpisodeIndex + 1) % episodesData.length;
+    if (currentEpisodeIndex === null && episodesData.length > 0) return handleSelectEpisode(0);
+    if (episodesData.length === 0) return;
+    const nextIndex = (currentEpisodeIndex! + 1) % episodesData.length;
     handleSelectEpisode(nextIndex);
   }, [currentEpisodeIndex, episodesData.length, handleSelectEpisode]);
 
   const handlePrevious = useCallback(() => {
-    if (currentEpisodeIndex === null) return handleSelectEpisode(episodesData.length - 1);
-    const prevIndex = (currentEpisodeIndex - 1 + episodesData.length) % episodesData.length;
+    if (currentEpisodeIndex === null && episodesData.length > 0) return handleSelectEpisode(episodesData.length - 1);
+    if (episodesData.length === 0) return;
+    const prevIndex = (currentEpisodeIndex! - 1 + episodesData.length) % episodesData.length;
     handleSelectEpisode(prevIndex);
   }, [currentEpisodeIndex, episodesData.length, handleSelectEpisode]);
   
@@ -130,21 +123,24 @@ const App: React.FC = () => {
   }, [playbackRate]);
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: 'var(--current-color-background)'}}>
-      <CerebralField mousePosition={mousePosition} playerYPosition={playerYPosition} />
-      
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden">
       <audio ref={audioRef} />
+      <ThemeTransitionOverlay /> {/* Add the overlay component */}
 
-      {/* Adapted Header - Assuming it's a simple component that will use CSS vars */}
       <Header />
-      {/* Theme Toggle Button - Example */}
+      
       <button 
-        onClick={toggleTheme}
-        className="fixed top-4 right-4 z-50 p-2 rounded theme-transition"
-        style={{backgroundColor: 'var(--current-color-surface)', color: 'var(--current-color-text-primary)', border: '1px solid var(--current-color-border)'}}
+        onClick={initiateThemeChange} // Use new function from context
+        disabled={isTransitioning} // Disable button during transition
+        className="fixed top-4 right-4 z-50 p-3 rounded-md theme-transition shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)]"
+        style={{
+            backgroundColor: 'var(--current-color-surface)', 
+            color: 'var(--current-color-text-primary)', 
+            border: '1px solid var(--current-color-border)',
+        }}
         aria-label="Toggle theme"
       >
-        {theme === 'light' ? 'Nexus' : 'Sanctuary'}
+        {theme === 'light' ? 'Dim Study Lights' : 'Illuminate Study'}
       </button>
 
       <motion.main 
@@ -186,7 +182,7 @@ const App: React.FC = () => {
       <AnimatePresence>
         {currentEpisode && (
           <CommandDeck
-            key="command-deck" // Key for AnimatePresence
+            key="command-deck" // Ensure key for AnimatePresence direct child
             episode={currentEpisode}
             isPlaying={isPlaying}
             currentTime={currentTime}
@@ -198,7 +194,6 @@ const App: React.FC = () => {
             onSeek={handleSeek}
             onSkip={handleSkip}
             onPlaybackRateChange={handlePlaybackRateChange}
-            onPlayerYPositionChange={setPlayerYPosition} // For Cerebral Field interaction
           />
         )}
       </AnimatePresence>
