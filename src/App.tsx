@@ -5,6 +5,8 @@ import Header from './components/Header';
 import EpisodeList from './components/EpisodeList';
 import PodcastPlayer from './components/PodcastPlayer';
 
+const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
+
 const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [episodes] = useState<Episode[]>(allEpisodes);
@@ -12,6 +14,7 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  const [playbackRate, setPlaybackRate] = useState<number>(1);
 
   const currentEpisode = currentEpisodeIndex !== null ? episodes[currentEpisodeIndex] : null;
 
@@ -24,15 +27,14 @@ const App: React.FC = () => {
       if (isFinite(audio.duration)) {
         setDuration(audio.duration);
       } else {
-        setDuration(0); // Set to 0 if duration is NaN or Infinite
+        setDuration(0); 
       }
     };
     const handleEpisodeEnd = () => {
-      // Check if there's a next episode before auto-playing
       if (currentEpisodeIndex !== null && currentEpisodeIndex < episodes.length - 1) {
         handleNext();
       } else {
-        setIsPlaying(false); // No next episode, or at the end of the list
+        setIsPlaying(false); 
       }
     };
     const handlePlay = () => setIsPlaying(true);
@@ -40,15 +42,15 @@ const App: React.FC = () => {
     
     audio.addEventListener('timeupdate', updateCurrentTime);
     audio.addEventListener('loadedmetadata', setAudioDuration);
-    audio.addEventListener('durationchange', setAudioDuration); // Handles cases where duration might change
+    audio.addEventListener('durationchange', setAudioDuration); 
     audio.addEventListener('ended', handleEpisodeEnd);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
 
-    // Set initial duration if audio is already loaded (e.g. on page refresh with an episode selected)
     if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
         setAudioDuration();
     }
+    audio.playbackRate = playbackRate; // Ensure playback rate is set on mount/episode change
 
 
     return () => {
@@ -59,7 +61,7 @@ const App: React.FC = () => {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [currentEpisodeIndex, episodes.length]); // Add episodes.length in case it could change (though static here)
+  }, [currentEpisodeIndex, episodes.length, playbackRate]); // Added playbackRate to dependencies
 
   const handleSelectEpisode = (index: number): void => {
     if (index < 0 || index >= episodes.length) {
@@ -67,13 +69,12 @@ const App: React.FC = () => {
       return;
     }
     setCurrentEpisodeIndex(index);
-    // isPlaying will be set by the 'play' event listener on the audio element
     if (audioRef.current) {
       audioRef.current.src = episodes[index].audioSrc;
       audioRef.current.load(); 
+      audioRef.current.playbackRate = playbackRate; // Ensure playback rate is set for new episode
       audioRef.current.play().catch(error => {
         console.error("Audio play failed on select:", error);
-        // isPlaying will be false due to 'pause' event or lack of 'play' event
       });
     }
   };
@@ -84,12 +85,11 @@ const App: React.FC = () => {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      // Ensure src is set if trying to play after initial load without auto-play
-      // or if somehow src is not the current episode's src
       if (audioRef.current.currentSrc !== episodes[currentEpisodeIndex].audioSrc) {
          audioRef.current.src = episodes[currentEpisodeIndex].audioSrc;
          audioRef.current.load();
       }
+      audioRef.current.playbackRate = playbackRate;
       audioRef.current.play().catch(error => {
         console.error("Audio play failed on toggle:", error);
       });
@@ -118,7 +118,25 @@ const App: React.FC = () => {
     if (audioRef.current && isFinite(seekTime) && duration > 0) {
       const newTime = Math.max(0, Math.min(seekTime, duration));
       audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime); // Optimistically update currentTime
+      setCurrentTime(newTime); 
+    }
+  };
+
+  const handleSkip = (amount: number) => {
+    if (audioRef.current) {
+      const newTime = Math.max(0, Math.min(audioRef.current.currentTime + amount, duration));
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime); 
+    }
+  };
+
+  const handlePlaybackRateChange = () => {
+    if (audioRef.current) {
+      const currentIndex = PLAYBACK_RATES.indexOf(playbackRate);
+      const nextIndex = (currentIndex + 1) % PLAYBACK_RATES.length;
+      const newRate = PLAYBACK_RATES[nextIndex];
+      setPlaybackRate(newRate);
+      audioRef.current.playbackRate = newRate;
     }
   };
 
@@ -126,7 +144,7 @@ const App: React.FC = () => {
     <div className="bg-background min-h-screen font-sans text-text-primary flex flex-col">
       <audio 
         ref={audioRef}
-        onLoadedData={() => { // Handle case where loadedmetadata might not fire reliably for duration
+        onLoadedData={() => { 
             if (audioRef.current && isFinite(audioRef.current.duration)) {
                 setDuration(audioRef.current.duration);
             }
@@ -150,10 +168,13 @@ const App: React.FC = () => {
           isPlaying={isPlaying}
           currentTime={currentTime}
           duration={duration}
+          playbackRate={playbackRate}
           onPlayPause={handlePlayPause}
           onNext={handleNext}
           onPrevious={handlePrevious}
           onSeek={handleSeek}
+          onSkip={handleSkip}
+          onPlaybackRateChange={handlePlaybackRateChange}
         />
       )}
     </div>
