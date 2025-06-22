@@ -3,27 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS-11: NCERT Decoded</title>
+    <title>CS-11: NCERT Decoded - Immersive Experience</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/index.css">
+    <link rel="stylesheet" href="/src/styles/global.css">
     <script>
-        // Configure Tailwind CSS via CDN
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'background': '#F0F2F5',
-                        'surface': '#FFFFFF',
+                        // Tailwind colors can still be used for utility, but theme colors will come from CSS vars
                         'brand': {
-                            'DEFAULT': '#3B82F6',
-                            'light': '#60A5FA',
-                            'dark': '#2563EB',
+                            'DEFAULT': 'var(--color-accent)', // Example of mapping
                         },
-                        'text': {
-                            'primary': '#1F2937',
-                            'secondary': '#6B7280',
-                        }
                     },
                     fontFamily: {
                         sans: ['Inter', 'Poppins', 'sans-serif'],
@@ -37,13 +29,40 @@
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
     "react/": "https://esm.sh/react@^19.1.0/",
-    "react": "https://esm.sh/react@^19.1.0"
+    "react": "https://esm.sh/react@^19.1.0",
+    "framer-motion": "https://esm.sh/framer-motion@^11.0.0"
   }
 }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-background font-sans text-text-primary antialiased">
+<body data-theme="light"> {/* Default theme, will be managed by React */}
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="display:none">
+      <defs>
+        <filter id="chromatic-aberration">
+          <feColorMatrix type="matrix" result="r"
+            values="1 0 0 0 0
+                    0 0 0 0 0
+                    0 0 0 0 0
+                    0 0 0 1 0"/>
+          <feColorMatrix type="matrix" result="g"
+            values="0 0 0 0 0
+                    0 1 0 0 0
+                    0 0 0 0 0
+                    0 0 0 1 0"/>
+          <feColorMatrix type="matrix" result="b"
+            values="0 0 0 0 0
+                    0 0 0 0 0
+                    0 0 1 0 0
+                    0 0 0 1 0"/>
+          <feOffset in="r" dx="0.5" dy="0.5" result="r_offset"/> {/* Adjusted dx/dy for subtlety */}
+          <feOffset in="g" dx="0" dy="0" result="g_offset"/>
+          <feOffset in="b" dx="-0.5" dy="-0.5" result="b_offset"/>  {/* Adjusted dx/dy for subtlety */}
+          <feBlend mode="screen" in="r_offset" in2="g_offset" result="rg_blend"/>
+          <feBlend mode="screen" in="rg_blend" in2="b_offset"/>
+        </filter>
+      </defs>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 <script type="module" src="/index.tsx"></script>

@@ -1,0 +1,95 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default to Sanctuary (Light) Theme */
+  --theme-transition-duration: 600ms;
+  --theme-timing-function: ease-in-out;
+
+  /* Sanctuary (Light) Theme Tokens */
+  --color-background-light: #F7F7F8;
+  --color-surface-light: #FFFFFF;
+  --color-border-light: #EAEAEA;
+  --color-text-primary-light: #1F2937;
+  --color-text-secondary-light: #6B7280;
+  --color-accent-primary-light: #4A6CFA; /* Cobalt Blue */
+  --color-accent-secondary-light: #7A92F7; /* Lighter Cobalt Blue */
+  --shadow-properties-light: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --backdrop-blur-light: none;
+  --glow-opacity-light: 0.4;
+  --particle-color-light: rgba(74, 108, 250, 0.4);
+
+
+  /* Nexus (Dark) Theme Tokens */
+  --color-background-dark: #0D1117;
+  --color-surface-dark: rgba(22, 27, 34, 0.75); /* Semi-transparent crystalline base */
+  --color-border-dark: rgba(0, 242, 254, 0.2); /* Faint glow base for borders/insets */
+  --color-text-primary-dark: #E6EDF3;
+  --color-text-secondary-dark: #8B949E;
+  --color-accent-primary-dark: #00F2FE; /* Cyan */
+  --color-accent-secondary-dark: #D832E5; /* Magenta */
+  --shadow-properties-dark: 0 8px 30px rgba(0, 242, 254, 0.1); /* Cyan glow shadow */
+  --backdrop-blur-dark: blur(16px);
+  --glow-opacity-dark: 0.6;
+  /* Particle colors for Nexus would be more complex, often set in JS for the canvas */
+}
+
+body[data-theme='light'] {
+  --current-color-background: var(--color-background-light);
+  --current-color-surface: var(--color-surface-light);
+  --current-color-border: var(--color-border-light);
+  --current-color-text-primary: var(--color-text-primary-light);
+  --current-color-text-secondary: var(--color-text-secondary-light);
+  --current-color-accent-primary: var(--color-accent-primary-light);
+  --current-color-accent-secondary: var(--color-accent-secondary-light);
+  --current-shadow-properties: var(--shadow-properties-light);
+  --current-backdrop-blur: var(--backdrop-blur-light);
+  --current-glow-opacity: var(--glow-opacity-light);
+  --current-particle-color: var(--particle-color-light);
+}
+
+body[data-theme='dark'] {
+  --current-color-background: var(--color-background-dark);
+  --current-color-surface: var(--color-surface-dark);
+  --current-color-border: var(--color-border-dark);
+  --current-color-text-primary: var(--color-text-primary-dark);
+  --current-color-text-secondary: var(--color-text-secondary-dark);
+  --current-color-accent-primary: var(--color-accent-primary-dark);
+  --current-color-accent-secondary: var(--color-accent-secondary-dark);
+  --current-shadow-properties: var(--shadow-properties-dark);
+  --current-backdrop-blur: var(--backdrop-blur-dark);
+  --current-glow-opacity: var(--glow-opacity-dark);
+  /* Particle color for dark theme handled by canvas logic */
+}
+
+body {
+  background-color: var(--current-color-background);
+  color: var(--current-color-text-primary);
+  font-family: 'Inter', 'Poppins', sans-serif;
+  transition: background-color var(--theme-transition-duration) var(--theme-timing-function),
+              color var(--theme-transition-duration) var(--theme-timing-function);
+  
+  /* Font Smoothing */
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* General transition for themeable properties on components */
+.theme-transition {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity, backdrop-filter;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-timing-function);
+}
+
+/* Example of using a themed property */
+.themed-surface {
+  background-color: var(--current-color-surface);
+  /* Add other properties that should transition */
+}
+
+.chromatic-aberration-filter {
+  filter: url(#chromatic-aberration);
+}
