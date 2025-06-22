@@ -4,7 +4,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ThemeTransitionOverlay: React.FC = () => {
-  const { isTransitioning, transitionDirection, completeActualThemeSwap } = useTheme();
+  const { isTransitioning, transitionDirection, completeActualThemeSwap, finalizeTransition } = useTheme();
 
   const commonOverlayStyle: React.CSSProperties = {
     position: 'fixed',
@@ -13,21 +13,20 @@ const ThemeTransitionOverlay: React.FC = () => {
     width: '100vw',
     height: '100vh',
     zIndex: 9999,
-    pointerEvents: 'none', // Allow clicks through if needed, though usually covers all
+    pointerEvents: 'none',
   };
 
   const lightWashVariants: Variants = {
     initial: {
-      clipPath: 'circle(0% at 0% 0%)', // Start top-left
+      clipPath: 'circle(0% at 0% 0%)',
     },
     animate: {
-      clipPath: 'circle(150% at 0% 0%)', // Expand to cover screen
+      clipPath: 'circle(150% at 0% 0%)', // Ensure it covers the whole screen
       transition: { duration: 1.2, ease: [0.25, 1, 0.5, 1] as const },
     },
-    exit: {
-        // Optional: if it needs to animate out, though usually just disappears
-        opacity: 0,
-        transition: { duration: 0.3, delay: 0.2 } // Delay slightly after theme swap
+    exit: { // Fade out quickly after revealing the light theme
+      opacity: 0,
+      transition: { duration: 0.3, delay: 0 }, // No delay, start fade out as soon as exit starts
     }
   };
 
@@ -39,27 +38,24 @@ const ThemeTransitionOverlay: React.FC = () => {
     },
     exit: { 
       opacity: 0,
-      transition: { duration: 0.6, ease: 'easeInOut' as const, delay: 0.2 } // Fade out after theme swap
+      transition: { duration: 0.6, ease: 'easeInOut' as const } 
     },
   };
   
-  // Track when animation starts to call completeActualThemeSwap mid-way or as needed
-  // This is a simplified approach; more complex sync might be needed.
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
     if (isTransitioning) {
-        // For 'toLight', swap when wash is about half-way or starting to reveal
-        // For 'toDark', swap when overlay is fully opaque
         const swapDelay = transitionDirection === 'toLight' ? 600 : 500; // ms
         
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
             completeActualThemeSwap();
         }, swapDelay);
-        return () => clearTimeout(timer);
     }
+    return () => clearTimeout(timer);
   }, [isTransitioning, transitionDirection, completeActualThemeSwap]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={finalizeTransition}>
       {isTransitioning && transitionDirection === 'toLight' && (
         <motion.div
           key="light-wash-overlay"
@@ -71,7 +67,6 @@ const ThemeTransitionOverlay: React.FC = () => {
           initial="initial"
           animate="animate"
           exit="exit"
-          // onAnimationComplete might be too late for theme swap, hence useEffect above
         />
       )}
       {isTransitioning && transitionDirection === 'toDark' && (
