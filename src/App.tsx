@@ -181,7 +181,7 @@ const App: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </motion.main>
 
       <AnimatePresence>
         {currentEpisode && (
