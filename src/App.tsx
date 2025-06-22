@@ -9,18 +9,23 @@ import Header from './components/Header';
 import Bookshelf from './components/Bookshelf';
 import Console from './components/Console';
 import ThemeTransitionOverlay from './components/ThemeTransitionOverlay';
+import CerebralField from './components/canvas/CerebralField'; // Added for dust motes
 
 const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
 
 const App: React.FC = () => {
   const { theme, initiateThemeChange, isLogicTransitioning } = useTheme();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const darkAmbientAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lightAmbientAudioRef = useRef<HTMLAudioElement | null>(null);
+
   const [episodesData] = useState<Episode[]>(allEpisodes);
-  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null); // Set to 0 to test console animation on load
+  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
+  const [isAmbientMuted, setIsAmbientMuted] = useState<boolean>(false);
   
   const currentEpisode = currentEpisodeIndex !== null ? episodesData[currentEpisodeIndex] : null;
 
@@ -30,8 +35,7 @@ const App: React.FC = () => {
       audioRef.current.src = episodesData[index].audioSrc;
       audioRef.current.load();
       audioRef.current.playbackRate = playbackRate;
-      // Autoplay is handled by the play() call after src/load
-      audioRef.current.play().catch(error => console.error("Error playing audio:", error));
+      audioRef.current.play().catch(error => console.error("Error playing episode audio:", error));
     }
   }, [episodesData, playbackRate]);
 
@@ -87,7 +91,7 @@ const App: React.FC = () => {
         audioRef.current.load();
       }
       audioRef.current.playbackRate = playbackRate;
-      audioRef.current.play().catch(error => console.error("Error playing audio:", error));
+      audioRef.current.play().catch(error => console.error("Error playing episode audio:", error));
     }
   }, [isPlaying, currentEpisodeIndex, episodesData, playbackRate, handleSelectEpisode]);
   
@@ -137,38 +141,65 @@ const App: React.FC = () => {
     }
   }, [playbackRate]);
 
+  const toggleAmbientMute = useCallback(() => {
+    setIsAmbientMuted(prev => !prev);
+  }, []);
+
+  // Ambient sound effect logic
+  useEffect(() => {
+    if (!darkAmbientAudioRef.current) {
+      darkAmbientAudioRef.current = new Audio('/audio/ambient-dark.mp3');
+      darkAmbientAudioRef.current.loop = true;
+      darkAmbientAudioRef.current.volume = 0.1;
+    }
+    if (!lightAmbientAudioRef.current) {
+      lightAmbientAudioRef.current = new Audio('/audio/ambient-light.mp3');
+      lightAmbientAudioRef.current.loop = true;
+      lightAmbientAudioRef.current.volume = 0.08;
+    }
+
+    const darkAudio = darkAmbientAudioRef.current;
+    const lightAudio = lightAmbientAudioRef.current;
+
+    if (isAmbientMuted) {
+      darkAudio.pause();
+      lightAudio.pause();
+    } else {
+      if (theme === 'dark') {
+        lightAudio.pause();
+        darkAudio.play().catch(e => console.error("Error playing dark ambient sound:", e));
+      } else {
+        darkAudio.pause();
+        lightAudio.play().catch(e => console.error("Error playing light ambient sound:", e));
+      }
+    }
+    // Cleanup on component unmount
+    return () => {
+        darkAudio.pause();
+        lightAudio.pause();
+    }
+  }, [theme, isAmbientMuted]);
+
+
   return (
     <motion.div 
-      className="min-h-screen flex flex-col relative overflow-x-hidden pb-32 md:pb-28"
+      className="min-h-screen flex flex-col relative overflow-x-hidden pb-32 md:pb-28" // Adjusted pb for console height
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, ease: "linear" }} // Stage 1: Background fade-in
+      transition={{ duration: 0.4, ease: "linear" }}
     >
+      <CerebralField theme={theme} />
       <audio ref={audioRef} />
+      {/* Ambient audio elements are not rendered in DOM but controlled via refs */}
       <ThemeTransitionOverlay />
 
-      <Header /> {/* Header will have its own animation */}
+      <Header />
       
-      <motion.button 
-        onClick={initiateThemeChange} 
-        disabled={isLogicTransitioning}
-        className="fixed top-4 right-4 z-50 p-3 rounded-md theme-transition shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--current-color-accent-primary)]"
-        style={{
-            backgroundColor: 'var(--current-color-surface)', 
-            color: 'var(--current-color-text-primary)', 
-            border: '1px solid var(--current-color-border)',
-        }}
-        aria-label="Toggle theme"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }} // Theme button animation
-      >
-        {theme === 'light' ? 'Dim Study Lights' : 'Illuminate Study'}
-      </motion.button>
+      {/* Theme switcher button removed from here, moved to Console */}
 
       <motion.main 
         className="flex-grow w-full max-w-5xl mx-auto px-4 md:px-8 py-8 relative z-10"
-        initial={{ opacity: 0, x: '100vw' }} // Stage 2: Bookshelf container slide-in
+        initial={{ opacity: 0, x: '100vw' }}
         animate={{ opacity: 1, x: '0%' }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
       >
@@ -184,24 +215,27 @@ const App: React.FC = () => {
           )}
       </motion.main>
 
-      <AnimatePresence>
-        {currentEpisode && (
-          <Console // Stage 3: Console animates in via its own variants (with delay)
-            key="console-deck" 
-            episode={currentEpisode}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            playbackRate={playbackRate}
-            onPlayPause={handlePlayPause}
-            onNext={stableHandleNext}
-            onPrevious={handlePrevious}
-            onSeek={handleSeek}
-            onSkip={handleSkip}
-            onPlaybackRateChange={handlePlaybackRateChange}
-          />
-        )}
-      </AnimatePresence>
+      {/* Console is now always rendered to allow for "Foreword" message */}
+      <Console
+        key="console-deck" 
+        episode={currentEpisode} // Can be null
+        isPlaying={isPlaying}
+        currentTime={currentTime}
+        duration={duration}
+        playbackRate={playbackRate}
+        onPlayPause={handlePlayPause}
+        onNext={stableHandleNext}
+        onPrevious={handlePrevious}
+        onSeek={handleSeek}
+        onSkip={handleSkip}
+        onPlaybackRateChange={handlePlaybackRateChange}
+        // Theme and Ambient Mute Props
+        theme={theme}
+        onToggleTheme={initiateThemeChange}
+        isThemeLogicTransitioning={isLogicTransitioning}
+        isAmbientMuted={isAmbientMuted}
+        onToggleAmbientMute={toggleAmbientMute}
+      />
     </motion.div>
   );
 };

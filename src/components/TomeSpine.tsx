@@ -23,18 +23,21 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
     
     initial: (isActiveFlag: boolean) => ({
       x: isActiveFlag ? 20 : 0,
+      rotateY: 0,
       boxShadow: isActiveFlag ? 'var(--tomespine-glow-shadow-static)' : 'none',
       zIndex: isActiveFlag ? 5 : 1,
       transition: { ease: "easeOut", duration: 0.4 }
     }),
-    hover: {
-      x: 10,
+    hover: { // Applied to non-active tomes
+      x: 10, // Slightly less x movement than active to distinguish
+      rotateY: -3, // Subtle rotation for "weighty" feel
       boxShadow: 'var(--tomespine-glow-shadow-static)',
       zIndex: 10,
-      transition: { ease: "easeOut", duration: 0.3 }
+      transition: { type: "spring", stiffness: 200, damping: 15 } // Spring for rotation
     },
     active: { 
       x: 20,
+      rotateY: 0, // No rotation when active, or a very slight one if desired
       boxShadow: 'var(--tomespine-glow-shadow-static)',
       zIndex: 5,
       transition: { ease: "easeOut", duration: 0.4 }
@@ -61,6 +64,7 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
     padding: '16px 8px', 
     boxSizing: 'border-box',
     borderRadius: '6px 3px 3px 6px', 
+    transformOrigin: 'center left', // For rotateY to feel like pulling from right edge
   };
   
   const darkThemeSpineOverlayStyle: React.CSSProperties = theme === 'dark' ? {
@@ -74,7 +78,8 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
     <motion.div
       role="listitem"
       variants={combinedVariants} 
-      custom={isActive} 
+      custom={isActive} // Pass isActive to 'initial' variant
+      initial="initial" // Set initial based on isActive
       animate={currentAnimateState} 
       whileHover={isActive ? undefined : "hover"} 
       className={`theme-transition ${isActive && isPlaying ? 'tomespine-pulsing' : ''}`}
@@ -91,10 +96,10 @@ const TomeSpine: React.FC<TomeSpineProps> = ({ episode, isActive, isPlaying, onS
       aria-pressed={isActive}
     >
       <h3
-        className="font-serif-display font-medium text-center origin-center" // Applied Lora font
+        className="font-serif-display font-medium text-center origin-center"
         style={{
           transform: 'rotate(180deg)', 
-          fontSize: '14px', // Slightly adjusted for Lora if needed
+          fontSize: '14px',
           lineHeight: '1.3',
           maxHeight: `${tomeBaseHeight - (tomeBaseWidth - 16) - 32 - 10}px`, 
           color: 'var(--current-color-accent-primary)',
