@@ -1,0 +1,5 @@
+{
+  "name": "CS-11: NCERT Decoded",
+  "description": "A Single-Page Application (SPA) for delivering educational audio content, focusing on clarity, accessibility, and navigational simplicity with a persistent audio player.",
+  "requestFramePermissions": []
+}
