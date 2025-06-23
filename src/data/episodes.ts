@@ -11,7 +11,11 @@ export const episodes: Episode[] = [
     title: "Computer Systems",
     description: "An introduction to the basic components of a computer system, including hardware, software, data, and users.",
     audioSrc: "/audio/chatpter1.mp3", // Updated from cs11-chapter-1.mp3
+<<<<<<< HEAD
     coverArt: "/images/cs1-cover.jpeg",
+=======
+    coverArt: "/images/cs-cover.png",
+>>>>>>> 8690e3d001ef23e9045dfaa69902ad0c6861f705
     duration: 952, // 15:52 - IMPORTANT: This duration likely needs to be updated for the new .wav file
   },
   {
