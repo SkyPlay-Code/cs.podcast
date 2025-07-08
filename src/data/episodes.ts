@@ -23,5 +23,14 @@ export const episodes: Episode[] = [
     coverArt: "/images/cs2-cover.jpeg",
     duration: 916, // 15:16
   },
+  {
+    id: 'cs11-ch3',
+    chapter: "Chapter 3",
+    title: "Emerging Computing Trends and Technologies",
+    description: "introduction to key emerging trends in computer science and technology",
+    audioSrc: "/audio/cs11-chapter-3.mp3",
+    coverArt: "/images/cs3-cover.jpeg",
+    duration: 916, // 15:16
+  },
   // ... more episodes can be added here following the same structure.
 ];
