@@ -30,7 +30,7 @@ export const episodes: Episode[] = [
     description: "introduction to key emerging trends in computer science and technology",
     audioSrc: "/audio/cs11-chapter-3.mp3",
     coverArt: "/images/cs3-cover.jpeg",
-    duration: 916, // 15:16
+    duration: 1081, // 18:01
   },
   // ... more episodes can be added here following the same structure.
 ];
