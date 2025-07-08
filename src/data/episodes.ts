@@ -12,7 +12,7 @@ export const episodes: Episode[] = [
     description: "An introduction to the basic components of a computer system, including hardware, software, data, and users.",
     audioSrc: "/audio/chatpter1.mp3", // Updated from cs11-chapter-1.mp3
     coverArt: "/images/cs1-cover.jpeg",
-    duration: 0, // 27:20 - IMPORTANT: This duration likely needs to be updated for the new .wav file
+    duration: 1640, // 27:20 - IMPORTANT: This duration likely needs to be updated for the new .wav file
   },
   {
     id: 'cs11-ch2',
@@ -21,7 +21,7 @@ export const episodes: Episode[] = [
     description: "Exploring how data is represented in a computer using ASCII, ISCII, Unicode, and various number systems like binary and hexadecimal.",
     audioSrc: "/audio/cs11-chapter-2.mp3",
     coverArt: "/images/cs2-cover.jpeg",
-    duration: 0, // 15:16
+    duration: 916, // 15:16
   },
   // ... more episodes can be added here following the same structure.
 ];
